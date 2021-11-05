@@ -26,7 +26,10 @@ def main():
         tweet_str = "Phew it's getting hot."
     elif temp < 18:
         tweet_str = "Brr it's chilly."
-    tweet_str += " The temperature is f{temp}"
+    else:
+        tweet_str = "Temperature nominal. "
+    tweet_str += f" The temperature is {temp}"
+    LOGGER.info(tweet_str)
 
     api = twit.authenticate
     twit.post_tweet(api, tweet_str)
