@@ -31,7 +31,7 @@ def main():
     tweet_str += f" The temperature is {temp}"
     LOGGER.info(tweet_str)
 
-    api = twit.authenticate
+    api = twit.authenticate()
     twit.post_tweet(api, tweet_str)
 
 
