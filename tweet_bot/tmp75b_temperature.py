@@ -38,7 +38,7 @@ def convert_raw_temp_to_float(raw_temp, bits=12):
     return temp_float
 
 
-def read_temperature(dev_addresss):
+def read_temperature(dev_addresss=DEV_ADDR):
     raw_temp = bus.read_word_data(DEV_ADDR, 0x00)
     return convert_raw_temp_to_float(raw_temp)
 
