@@ -1,0 +1,2 @@
+# Tweet the temperature every hour
+0 * * * * /home/pi/repositories/tweet_bot/tweet_temperature.sh
