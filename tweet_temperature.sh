@@ -1,4 +1,10 @@
 #!/usr/bin/env bash
 
-source /home/pi/repositories/tweet_bot/set_env_vars.sh
-poetry run /home/pi/repositories/tweet_bot/tweet_bot/temperature_tweet_bot.py
+# Change to the working directory
+cd "$(dirname "$0")"
+
+# Set the env vars
+source set_env_vars.sh
+
+# Run the bot
+$HOME/.local/bin/poetry run tweet_bot/temperature_tweet_bot.py
