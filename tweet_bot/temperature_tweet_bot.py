@@ -80,12 +80,15 @@ def is_midday(now=datetime.now()):
 def main():
     # Get the current temperture
     temp = tmp75b.read_temperature()
+    LOGGER.info(f'temperature={temp}')
 
     # Get the previous temperature state
     prev_state = load_state()
     # Determine the new state (using hysteresis)
     state = state_with_hysteresis(
         pv=temp, prev_state=prev_state, sp1=SP1, sp2=SP2, h=HYSTERESIS)
+
+    LOGGER.info(f'{prev_state}, {state}')
 
     # If the state has changed then tweet the temperature
     if state != prev_state:
