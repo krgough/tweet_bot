@@ -110,10 +110,6 @@ def main():
 
 
 if __name__ == "__main__":
-
-    print(state_with_hysteresis(10.5, 'NOMINAL'))
-    exit()
-
     logging.basicConfig(level=logging.INFO)
     main()
     LOGGER.info('All done.')
