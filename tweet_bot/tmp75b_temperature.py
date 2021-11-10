@@ -1,11 +1,14 @@
 #!/bin/env python3
 
 import time
-import smbus2
+# import smbus2
 
 DEV_BUS = 1
 DEV_ADDR = 0x48  # I2C address for TMP75B test board (ADDR = 000)
-bus = smbus2.SMBus(DEV_BUS)
+# bus = smbus2.SMBus(DEV_BUS)
+
+# For testing we just create a fake bus
+bus = None
 
 
 def convert_raw_temp_to_float(raw_temp, bits=12):
