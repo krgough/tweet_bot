@@ -115,6 +115,7 @@ def main():
     # an hour and we check here if time is midday +/-15mins.
     if is_midday():
         LOGGER.info('Midday tweet')
+        tweet_str = f"Midday Temperature={temp}'C"
         api = twit.authenticate()
         twit.post_tweet(api, tweet_str)
 
