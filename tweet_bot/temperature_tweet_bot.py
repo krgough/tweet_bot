@@ -84,11 +84,15 @@ def main():
 
     # Get the previous temperature state
     prev_state = load_state()
+
     # Determine the new state (using hysteresis)
     state = state_with_hysteresis(
         pv=temp, prev_state=prev_state, sp1=SP1, sp2=SP2, h=HYSTERESIS)
+    
+    # Save the state
+    save_state(state)
 
-    LOGGER.info(f'{prev_state}, {state}')
+    LOGGER.info(f'Previous State={prev_state}, Current State={state}')
 
     # If the state has changed then tweet the temperature
     if state != prev_state:
@@ -100,14 +104,17 @@ def main():
             tweet_str = "Temperature nominal."
         tweet_str += f" {temp}'C"
 
-        LOGGER.info(tweet_str)
+        LOGGER.info(f"Tweeting. {tweet_str}")
         api = twit.authenticate()
         twit.post_tweet(api, tweet_str)
+    else:
+        LOGGER.info('No state change, so not tweeting')
 
     # If it's close to midday and we have not changed state
     # then tweet anyway. We assume cron calls this code once
     # an hour and we check here if time is midday +/-15mins.
     if is_midday():
+        LOGGER.info('Midday tweet')
         api = twit.authenticate()
         twit.post_tweet(api, tweet_str)
 
