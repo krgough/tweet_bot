@@ -88,7 +88,7 @@ def main():
     # Determine the new state (using hysteresis)
     state = state_with_hysteresis(
         pv=temp, prev_state=prev_state, sp1=SP1, sp2=SP2, h=HYSTERESIS)
-    
+
     # Save the state
     save_state(state)
 
