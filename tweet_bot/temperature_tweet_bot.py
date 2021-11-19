@@ -17,7 +17,7 @@ from datetime import datetime
 
 
 LOGGER = logging.getLogger(__name__)
-STATE_FILE = "temperature_state"
+STATE_FILE = ".temperature_state"
 
 # These 2 setpoints define three ranges
 # t < SP1 = Cold
@@ -78,6 +78,10 @@ def is_midday(now=datetime.now()):
 
 
 def main():
+    # Set shutdown mode to save current
+    # All temperature reads are done with one-shot mode
+    tmp75b.set_shutdown_mode()
+
     # Get the current temperture
     temp = tmp75b.read_temperature()
     LOGGER.info(f'temperature={temp}')
