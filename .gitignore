@@ -4,3 +4,4 @@ tests/__pycache__/
 tweet_bot/__pycache__/
 __pycache__/
 .temperature_state
+env

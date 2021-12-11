@@ -1,34 +1,51 @@
-
+#!/usr/bin/env python3
+"""
+Tests for tweet_bot
+"""
+import time
 from datetime import datetime
+
+import pytest
+
 from tweet_bot import __version__
 import tweet_bot.temperature_tweet_bot as bot
 import tweet_bot.twitter_api as twit
 import tweet_bot.tmp75b_temperature as tmp75b
-import time
-import pytest
 
 
 def test_version():
+    """ Check the module version is correct
+    """
     assert __version__ == '0.1.0'
 
 
-@pytest.fixture
-def api():
+@pytest.fixture(name='api')
+def fixture_api():
+    """  Get a tweepy api object for use in
+         the following tests
+    """
     return twit.authenticate()
 
 
-def test_auth():
+def test_auth(api):
+    """ Check that we have authenticated
+        with the twitter api
+    """
     assert api is not None
 
 
 def test_post_and_delete_tweet(api):
-    tweet_str = '{} : Hello from Keith'.format(time.time())
+    """ Post a tweet and then delete it
+    """
+    tweet_str = f'{time.time()} : Hello from Keith'
     new_tweet = twit.post_tweet(api, tweet_str)
     assert new_tweet is not None
     assert twit.delete_tweet(api, new_tweet.id) is not None
 
 
 def test_get_public_tweets(api):
+    """ Get a list of tweets
+    """
     tweets = twit.get_tweets(api)
     assert tweets is not None
     for tweet in tweets:
@@ -47,6 +64,9 @@ test_vals = [
 
 @pytest.mark.parametrize("test_input, expected", test_vals)
 def test_raw_temp_to_float(test_input, expected):
+    """  Test convertion of raw temperature values
+         to floats.
+    """
     assert tmp75b.convert_raw_temp_to_float(test_input) == expected
 
 
@@ -70,8 +90,10 @@ temp_state_vals = [
 
 @pytest.mark.parametrize("temperature, prev_state, state", temp_state_vals)
 def test_state_with_hysteresis(temperature, prev_state, state):
+    """  Test that the hysteresis works
+    """
     assert bot.state_with_hysteresis(
-        pv=temperature,
+        pvar=temperature,
         prev_state=prev_state) == state
 
 
@@ -87,4 +109,6 @@ is_midday_test_vals = [
 
 @pytest.mark.parametrize("now_dt, expected", is_midday_test_vals)
 def test_is_midday(now_dt, expected):
+    """  Test that is_midday works
+    """
     assert bot.is_midday(now=now_dt) == expected

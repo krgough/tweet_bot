@@ -1,8 +1,12 @@
 #!/bin/env python3
+"""
+TMP75b - Configure and read temperature from device
+"""
 
 import time
-import smbus2
 import logging
+import smbus2
+
 
 LOGGER = logging.getLogger(__file__)
 
@@ -15,10 +19,11 @@ CONFIG_REG = 0x01
 ONE_SHOT = 0x80
 SHUTDOWN = 0x01
 
-BUS = smbus2.SMBus(DEV_BUS)
-
-# For testing we just create a fake bus
-# BUS = None
+try:
+    BUS = smbus2.SMBus(DEV_BUS)
+except FileNotFoundError:
+    # For testing we just create a fake bus
+    BUS = None
 
 
 def read_config_reg(addr=DEV_ADDR):
@@ -62,22 +67,21 @@ def set_one_shot(addr=DEV_ADDR):
 
 
 def convert_raw_temp_to_float(raw_temp, bits=12):
-    # LSB is temp in degree resolution 1'C
-    # Represented in 2s complement
-    # USB upper 4 bits are fractional temp
-    # USB lower 4 bits are reserved
-    # 1111 xxxx  1 111 1111
-    #   |  |     | |
-    #   |  |     | 0xEF = 127
-    #   |  |     sign i.e. -ve
-    #   |  reserved bits
-    #   Fractional part = 15/16 = 0.9375
-    #
-    #   1111xxxx 11111111 = -127.09375
-    #   0000xxxx 00000000 = 0
-    #   1111xxxx 01111111 = -0.0625
-    #   0000xxxx 10000000 = -128
-
+    """ LSB is temp in degree resolution 1'C
+        Represented in 2s complement
+        USB upper 4 bits are fractional temp
+        USB lower 4 bits are reserved
+        1111 xxxx  1 111 1111
+          |  |     | |
+          |  |     | 0xEF = 127
+          |  |     sign i.e. -ve
+          |  reserved bits
+          Fractional part = 15/16 = 0.9375
+          1111xxxx 11111111 = -127.09375
+          0000xxxx 00000000 = 0
+          1111xxxx 01111111 = -0.0625
+          0000xxxx 10000000 = -128
+    """
     int_temp = (raw_temp & 0xFF) << 8
     frac_temp = (raw_temp & 0xF000) >> 8
     temp_float = ((int_temp + frac_temp) >> 4)
@@ -91,7 +95,7 @@ def convert_raw_temp_to_float(raw_temp, bits=12):
     return temp_float
 
 
-def read_temperature(dev_addresss=DEV_ADDR, one_shot=True):
+def read_temperature(addr=DEV_ADDR, one_shot=True):
     """ If one_shot then we need to start a conversion and
         wait for it to compete before reading temperature
     """
@@ -100,7 +104,7 @@ def read_temperature(dev_addresss=DEV_ADDR, one_shot=True):
         # Fastest conversion time is 37Hz ie approx 30ms
         # so we will wait 100ms ro be sure
         time.sleep(0.1)
-    raw_temp = BUS.read_word_data(DEV_ADDR, TEMP_REG)
+    raw_temp = BUS.read_word_data(addr, TEMP_REG)
     return convert_raw_temp_to_float(raw_temp)
 
 

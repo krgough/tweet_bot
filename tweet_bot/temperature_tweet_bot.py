@@ -10,10 +10,11 @@ hour.
 """
 
 import logging
-import tmp75b_temperature as tmp75b
-import twitter_api as twit
 import pickle
 from datetime import datetime
+
+import tmp75b_temperature as tmp75b
+import twitter_api as twit
 
 
 LOGGER = logging.getLogger(__name__)
@@ -28,25 +29,27 @@ SP2 = 24  # Hot
 HYSTERESIS = 0.5
 
 
-def save_state(state: any, file=STATE_FILE) -> None:
+def save_state(state: any, filename=STATE_FILE) -> None:
     """ Save the current state to the state file
     """
-    pickle.dump(state, open(file, 'wb'))
+    with open(filename, mode='w', encoding='utf-8') as file:
+        pickle.dump(state, file)
 
 
-def load_state(file=STATE_FILE):
+def load_state(filename=STATE_FILE):
     """ Load previous state from the state file
     """
     try:
-        state = pickle.load(open(file, 'rb'))
+        with open(filename, 'rb') as file:
+            state = pickle.load(file)
     # Capture any file reading error or empty file
     except (OSError, EOFError):
         state = 'NOMINAL'
     return state
 
 
-def state_with_hysteresis(pv, prev_state, sp1=SP1, sp2=SP2, h=HYSTERESIS):
-    """ pv = Process variable (temperature)
+def state_with_hysteresis(pvar, prev_state, sp1=SP1, sp2=SP2, hys=HYSTERESIS):
+    """ pvar = Process variable (temperature)
         sp1 = Setpoint1
         sp2 = Setpoint2
         h = hysteresis
@@ -54,11 +57,11 @@ def state_with_hysteresis(pv, prev_state, sp1=SP1, sp2=SP2, h=HYSTERESIS):
         state = new state
     """
     assert prev_state in ['LOW', 'NOMINAL', 'HIGH']
-    if pv < sp1 - h:
+    if pvar < sp1 - hys:
         state = 'LOW'
-    elif sp1 + h <= pv <= sp2 - h:
+    elif sp1 + hys <= pvar <= sp2 - hys:
         state = 'NOMINAL'
-    elif pv > sp2 + h:
+    elif pvar > sp2 + hys:
         state = 'HIGH'
     else:
         state = prev_state
@@ -78,25 +81,32 @@ def is_midday(now=datetime.now()):
 
 
 def main():
+    """ Read temperature and tweet if we have changed
+        state or tweet anyway if it is midday.
+    """
     # Set shutdown mode to save current
     # All temperature reads are done with one-shot mode
     tmp75b.set_shutdown_mode()
 
     # Get the current temperture
     temp = tmp75b.read_temperature()
-    LOGGER.info(f'temperature={temp}')
+    LOGGER.info('temperature= %s', temp)
 
     # Get the previous temperature state
     prev_state = load_state()
 
     # Determine the new state (using hysteresis)
     state = state_with_hysteresis(
-        pv=temp, prev_state=prev_state, sp1=SP1, sp2=SP2, h=HYSTERESIS)
+        pvar=temp,
+        prev_state=prev_state,
+        sp1=SP1,
+        sp2=SP2,
+        hys=HYSTERESIS)
 
     # Save the state
     save_state(state)
 
-    LOGGER.info(f'Previous State={prev_state}, Current State={state}')
+    LOGGER.info('Previous State=%s, Current State=%s', prev_state, state)
 
     # If the state has changed then tweet the temperature
     if state != prev_state:
@@ -108,7 +118,7 @@ def main():
             tweet_str = "Temperature nominal."
         tweet_str += f" {temp}'C"
 
-        LOGGER.info(f"Tweeting. {tweet_str}")
+        LOGGER.info("Tweeting. %s", tweet_str)
         api = twit.authenticate()
         twit.post_tweet(api, tweet_str)
     else:

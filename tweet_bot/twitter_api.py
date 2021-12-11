@@ -7,9 +7,11 @@ Some methods for the twitter API
 
 '''
 
-import tweepy
 import logging
 import os
+import sys
+import tweepy
+
 
 LOGGER = logging.getLogger(__name__)
 
@@ -25,8 +27,8 @@ ENV_VARS = {
 for env in ENV_VARS:
     ENV_VARS[env] = os.environ.get(env)
     if not ENV_VARS[env]:
-        LOGGER.error(f'Environment variable not found: {env}')
-        exit(1)
+        LOGGER.error('Environment variable not found: %s', env)
+        sys.exit(1)
 
 
 def authenticate():
@@ -71,13 +73,13 @@ def post_tweet(api, tweet_string):
     return res
 
 
-def delete_tweet(api, id):
+def delete_tweet(api, tweet_id):
     """  Delete the given tweet
     """
     try:
-        res = api.destroy_status(id=id)
+        res = api.destroy_status(id=tweet_id)
     except tweepy.TweepyException:
-        LOGGER.error('Could not delete Tweet with id=%s', id)
+        LOGGER.error('Could not delete Tweet with id=%s', tweet_id)
         res = None
     return res
 
@@ -115,7 +117,7 @@ def main():
 
     except tweepy.TweepyException:
         LOGGER.error('One or more twitter api calls failed.')
-        exit(1)
+        sys.exit(1)
 
 
 if __name__ == "__main__":
