@@ -13,8 +13,8 @@ import logging
 import pickle
 from datetime import datetime
 
-import tmp75b_temperature as tmp75b
-import twitter_api as twit
+import tweet_bot.tmp75b_temperature as tmp75b
+import tweet_bot.twitter_api as twit
 
 
 LOGGER = logging.getLogger(__name__)
