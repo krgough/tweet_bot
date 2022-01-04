@@ -30,59 +30,61 @@ HYSTERESIS = 0.5
 
 
 def save_state(state: any, filename=STATE_FILE) -> None:
-    """ Save the current state to the state file
-    """
-    with open(filename, mode='w', encoding='utf-8') as file:
+    """Save the current state to the state file"""
+    with open(filename, mode="w", encoding="utf-8") as file:
         pickle.dump(state, file)
 
 
 def load_state(filename=STATE_FILE):
-    """ Load previous state from the state file
-    """
+    """Load previous state from the state file"""
     try:
-        with open(filename, 'rb') as file:
+        with open(filename, "rb") as file:
             state = pickle.load(file)
     # Capture any file reading error or empty file
     except (OSError, EOFError):
-        state = 'NOMINAL'
+        state = "NOMINAL"
     return state
 
 
 def state_with_hysteresis(pvar, prev_state, sp1=SP1, sp2=SP2, hys=HYSTERESIS):
-    """ pvar = Process variable (temperature)
-        sp1 = Setpoint1
-        sp2 = Setpoint2
-        h = hysteresis
-        prev_state = previous state
-        state = new state
+    """Return the temperature "state" LOW|MED|HIGH
+
+    pvar = Process variable (temperature)
+    sp1 = Setpoint1
+    sp2 = Setpoint2
+    h = hysteresis
+    prev_state = previous state
+    state = new state
     """
-    assert prev_state in ['LOW', 'NOMINAL', 'HIGH']
+    assert prev_state in ["LOW", "NOMINAL", "HIGH"]
     if pvar < sp1 - hys:
-        state = 'LOW'
+        state = "LOW"
     elif sp1 + hys <= pvar <= sp2 - hys:
-        state = 'NOMINAL'
+        state = "NOMINAL"
     elif pvar > sp2 + hys:
-        state = 'HIGH'
+        state = "HIGH"
     else:
         state = prev_state
     return state
 
 
 def is_midday(now=datetime.now()):
-    """ Returns True if current time is between
-        11:45 - 12:15
-        Else False
+    """Return True if it is close to midday
+
+    Returns True if current time is between 11:45 - 12:15
+    Else False
     """
     midday = now.replace(hour=12, minute=00, second=0, microsecond=0)
     if abs((now - midday).total_seconds()) <= (15 * 60):
         return True
-
     return False
 
 
 def main():
-    """ Read temperature and tweet if we have changed
-        state or tweet anyway if it is midday.
+    """Temperature Tweeting application
+
+    Read temperature and tweet if we have changed state or
+    tweet anyway if it is midday.
     """
     # Set shutdown mode to save current
     # All temperature reads are done with one-shot mode
@@ -90,29 +92,26 @@ def main():
 
     # Get the current temperture
     temp = tmp75b.read_temperature()
-    LOGGER.info('temperature= %s', temp)
+    LOGGER.info("temperature= %s", temp)
 
     # Get the previous temperature state
     prev_state = load_state()
 
     # Determine the new state (using hysteresis)
     state = state_with_hysteresis(
-        pvar=temp,
-        prev_state=prev_state,
-        sp1=SP1,
-        sp2=SP2,
-        hys=HYSTERESIS)
+        pvar=temp, prev_state=prev_state, sp1=SP1, sp2=SP2, hys=HYSTERESIS
+    )
 
     # Save the state
     save_state(state)
 
-    LOGGER.info('Previous State=%s, Current State=%s', prev_state, state)
+    LOGGER.info("Previous State=%s, Current State=%s", prev_state, state)
 
     # If the state has changed then tweet the temperature
     if state != prev_state:
-        if state == 'HIGH':
+        if state == "HIGH":
             tweet_str = "Phew it's getting hot."
-        elif state == 'LOW':
+        elif state == "LOW":
             tweet_str = "Brr it's chilly."
         else:
             tweet_str = "Temperature nominal."
@@ -122,13 +121,13 @@ def main():
         api = twit.authenticate()
         twit.post_tweet(api, tweet_str)
     else:
-        LOGGER.info('No state change, so not tweeting')
+        LOGGER.info("No state change, so not tweeting")
 
     # If it's close to midday and we have not changed state
     # then tweet anyway. We assume cron calls this code once
     # an hour and we check here if time is midday +/-15mins.
     if is_midday():
-        LOGGER.info('Midday tweet')
+        LOGGER.info("Midday tweet")
         tweet_str = f"Midday Temperature={temp}'C"
         api = twit.authenticate()
         twit.post_tweet(api, tweet_str)
@@ -137,4 +136,4 @@ def main():
 if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO)
     main()
-    LOGGER.info('All done.')
+    LOGGER.info("All done.")
